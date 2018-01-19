@@ -5,20 +5,21 @@ import {withStyles} from 'material-ui/styles';
 import withRoot from '../src/withRoot';
 import Layout from '../components/layout';
 import {inject, observer} from 'mobx-react'
-import Stepper, {Step, StepLabel, StepContent} from "material-ui/Stepper";
+import Stepper, {Step, StepContent, StepLabel} from "material-ui/Stepper";
 import TextField from "material-ui/TextField";
 import Paper from "material-ui/Paper";
 import Grid from "material-ui/Grid";
 import Button from "material-ui/Button";
 import Router from 'next/router';
 import Typography from "material-ui/Typography";
-import GoogleMapReact from 'google-map-react';
 import Select from "material-ui/Select";
 import MenuItem from "material-ui/Menu/MenuItem";
-import Input, {InputLabel} from "material-ui/Input";
-import {FormControl, FormLabel, FormControlLabel} from "material-ui/Form";
+import {InputLabel} from "material-ui/Input";
+import {FormControl, FormControlLabel, FormLabel} from "material-ui/Form";
 import Radio, {RadioGroup} from 'material-ui/Radio';
 import update from 'immutability-helper';
+import Map from '../components/map';
+import {Marker, InfoWindow} from "react-google-maps";
 
 const styles = theme => ({
   actionBtn: {
@@ -33,12 +34,24 @@ const styles = theme => ({
   paper: {
     padding: theme.spacing.unit * 3
   },
-  mapBox: {
-    height: '300px'
-  },
   formControl: {
     marginBottom: theme.spacing.unit * 2
   },
+  stepContent: {
+    paddingTop: '10px',
+    paddingLeft: '25px'
+  },
+  infoBox: {
+    backgroundColor: '#fff',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    borderRadius: '2px',
+    width: '140px'
+  },
+  radioDescription: {
+    fontSize: '12px',
+    fontStyle: 'Italic'
+  }
 });
 
 @inject('store') @observer
@@ -49,16 +62,32 @@ class ConfigWizard extends React.Component {
 
   state = {
     activeStep: 0,
+    region: '',
+    mapLocation: {lat: -33.8527273, lng: 151.2345705},
+    mapZoom: 11,
+    infoBoxSelectedProviderId: null,
     data: {
       name: '',
-      location: '',
       cpuCores: 1,
       ram: 4,
-      gpu:'',
+      gpuCores: 0,
       storage: 10,
       containerType: 'Docker',
-      containerUrl: ''
+      provider: '',
+      dockerConfig: {
+        repositoryUrl: '',
+        imageName: ''
+      },
+      kubernetesConfig: {
+        script: ''
+      },
+      priceType: '',
+      price: 0
     }
+  };
+
+  toggleInfoBox = (id = null) => {
+    this.setState({infoBoxSelectedProviderId: id});
   };
 
   onPrevious = () => {
@@ -67,7 +96,7 @@ class ConfigWizard extends React.Component {
 
   onNext = (isLast: boolean) => {
     if (isLast) {
-      this.props.store.addConfiguration({...this.state.data,id:this.state.data.name});
+      this.props.store.addConfiguration({...this.state.data, id: this.state.data.name});
       Router.push('/dashboard');
     } else {
       this.setState({activeStep: ++this.state.activeStep});
@@ -78,18 +107,40 @@ class ConfigWizard extends React.Component {
     Router.push('/dashboard');
   };
 
-  handleChange = name => event => {
-    let newState = update(this.state, {
-      data: {
+  handleChange = (name, formData = true) => event => {
+    let newState = null;
+    if (formData === true) {
+      newState = update(this.state, {
+        data: {
+          [name]: {$set: event.target.value},
+        }
+      });
+    } else {
+      newState = update(this.state, {
         [name]: {$set: event.target.value},
-      }
-    });
+      });
+    }
+    if (name === 'provider') {
+      newState.infoBoxSelectedProviderId = event.target.value;
+    }
     this.setState(newState);
   };
 
+  changeMapRegion = (regionId) => {
+    const {regions} = this.props.store;
+    let region = regions.find(i => i.id == regionId);
+    this.setState({mapLocation: region.location, mapZoom: region.zoom});
+  };
+
+  selectProvider = (id) => {
+    this.setState({data: {provider: id}});
+  };
+
   render() {
-    const {classes} = this.props;
-    const {activeStep, data} = this.state;
+    const {classes, store} = this.props;
+    const {activeStep, data, infoBoxSelectedProviderId} = this.state;
+    const {providers, regions} = store;
+    let {state} = this;
 
     return (
       <div>
@@ -111,25 +162,66 @@ class ConfigWizard extends React.Component {
                     </StepContent>
                   </Step>
                   <Step>
-                    <StepLabel>Location</StepLabel>
+                    <StepLabel>Provider</StepLabel>
                     <StepContent>
                       <FormControl fullWidth className={classes.formControl}>
-                        <InputLabel htmlFor="location">Location</InputLabel>
+                        <InputLabel htmlFor="location">Region</InputLabel>
                         <Select
-                          value={data.location}
-                          onChange={this.handleChange('location')}
+                          value={state.region}
+                          onChange={(e) => {
+                            this.handleChange('region', false)(e);
+                            this.changeMapRegion(e.target.value);
+                          }}
+                          required
+                        >
+                          {regions.map(i => (
+                            <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl fullWidth className={classes.formControl}>
+                        <InputLabel htmlFor="location">Provider</InputLabel>
+                        <Select
+                          value={data.provider}
+                          onChange={this.handleChange('provider')}
                           required
                           fullWidth
                         >
-                          <MenuItem value="Sydney Provider 1">Sydney Provider 1</MenuItem>
-                          <MenuItem value="Sydney Provider 2">Sydney Provider 2</MenuItem>
+                          {providers.filter(i => (i.region.id === state.region) || !state.region).map(i => (
+                            <MenuItem key={i.id} value={i.id}>{i.name}</MenuItem>
+                          ))}
                         </Select>
                       </FormControl>
-                      <div className={classes.mapBox}>
-                        <GoogleMapReact bootstrapURLKeys={{key: 'AIzaSyA0wwNWl1SoRNcHLmE94ST06IOSAn4WLho'}}
-                                        defaultCenter={{lat: -33.8527273, lng: 151.2345705}}
-                                        defaultZoom={11}/>
-                      </div>
+
+                      <Map
+                        googleMapURL="https://maps.googleapis.com/maps/api/js?key=AIzaSyA0wwNWl1SoRNcHLmE94ST06IOSAn4WLho&v=3.exp&libraries=geometry,drawing,places"
+                        loadingElement={<div/>}
+                        containerElement={<div style={{height: `400px`}}/>}
+                        mapElement={<div style={{height: `100%`}}/>}
+                        center={state.mapLocation}
+                        zoom={state.mapZoom}
+                      >
+                        {providers.map(i => (
+                          <Marker
+                            key={i.id}
+                            position={i.location}
+                            onClick={() => this.toggleInfoBox(i.id)}
+
+                          >
+                            {state.infoBoxSelectedProviderId === i.id &&
+                            <InfoWindow
+                              onCloseClick={() => this.toggleInfoBox(null)}
+
+                            >
+                              <div className={classes.infoBox}>
+                                <div>{i.name}</div>
+                                <div><Button onClick={() => this.selectProvider(i.id)}>Select</Button></div>
+                              </div>
+                            </InfoWindow>}
+                          </Marker>
+                        ))}
+                      </Map>
                       <Actions classes={classes} onPrevious={this.onPrevious} onNext={this.onNext}
                                onCancel={this.onCancel}/>
                     </StepContent>
@@ -143,7 +235,6 @@ class ConfigWizard extends React.Component {
                           value={data.cpuCores}
                           onChange={this.handleChange('cpuCores')}
                           type="number"
-                          fullWidth
                         />
                       </FormControl>
                       <FormControl fullWidth className={classes.formControl}>
@@ -152,7 +243,6 @@ class ConfigWizard extends React.Component {
                           value={data.ram}
                           onChange={this.handleChange('ram')}
                           type="number"
-                          fullWidth
                         />
                       </FormControl>
                       <FormControl fullWidth className={classes.formControl}>
@@ -161,7 +251,14 @@ class ConfigWizard extends React.Component {
                           value={data.storage}
                           onChange={this.handleChange('storage')}
                           type="number"
-                          fullWidth
+                        />
+                      </FormControl>
+                      <FormControl fullWidth className={classes.formControl}>
+                        <TextField
+                          label="GPU Cores"
+                          value={data.gpuCores}
+                          onChange={this.handleChange('cpuCores')}
+                          type="number"
                         />
                       </FormControl>
                       <Actions classes={classes} onPrevious={this.onPrevious} onNext={this.onNext}
@@ -172,7 +269,6 @@ class ConfigWizard extends React.Component {
                     <StepLabel>Installation Script</StepLabel>
                     <StepContent>
                       <FormControl fullWidth className={classes.formControl}>
-                        <FormLabel>Container</FormLabel>
                         <RadioGroup
                           value={data.containerType}
                           onChange={this.handleChange('containerType')}
@@ -181,15 +277,37 @@ class ConfigWizard extends React.Component {
                           <FormControlLabel value="Kubernetes" control={<Radio/>} label="Kubernetes"/>
                         </RadioGroup>
                       </FormControl>
-                      <FormControl fullWidth className={classes.formControl}>
-                        <TextField
-                          label="Container URL"
-                          value={data.containerUrl}
-                          onChange={this.handleChange('containerUrl')}
-                          fullWidth
-                          required
-                        />
-                      </FormControl>
+                      {data.containerType === 'Docker' ?
+                        <div>
+                          <FormControl fullWidth className={classes.formControl}>
+                            <TextField
+                              label="Repository URL"
+                              value={data.dockerConfig.repositoryUrl}
+                              onChange={(e) => this.setState(update(this.state, {data: {dockerConfig: {repositoryUrl: {$set: e.target.value}}}}))}
+                              fullWidth
+                              required
+                            />
+                          </FormControl>
+                          <FormControl fullWidth className={classes.formControl}>
+                            <TextField
+                              label="Image Name"
+                              value={data.dockerConfig.imageName}
+                              onChange={(e) => this.setState(update(this.state, {data: {dockerConfig: {imageName: {$set: e.target.value}}}}))}
+                              fullWidth
+                              required
+                            />
+                          </FormControl>
+                        </div>
+                        :
+                        <FormControl fullWidth className={classes.formControl}>
+                          <TextField
+                            label="Script"
+                            value={data.kubernetesConfig.script}
+                            onChange={(e) => this.setState(update(this.state, {data: {kubernetesConfig: {script: {$set: e.target.value}}}}))}
+                            fullWidth
+                            required
+                          />
+                        </FormControl>}
                       <Actions classes={classes} onPrevious={this.onPrevious} onNext={this.onNext}
                                onCancel={this.onCancel}/>
                     </StepContent>
@@ -197,6 +315,45 @@ class ConfigWizard extends React.Component {
                   <Step>
                     <StepLabel>Price</StepLabel>
                     <StepContent>
+                      <FormControl>
+                        <FormLabel style={{marginBottom: '20px'}}>Pricing</FormLabel>
+                        <RadioGroup
+                          value={data.priceType}
+                          onChange={this.handleChange('priceType')}
+                        >
+                          <FormControlLabel value="eventualAvailability" control={<Radio/>}
+                                            label={<RadioLabel classes={classes} label="Eventual availability"
+                                                               description={<div>
+                                                                 Set the maximum price you are willing to pay for your
+                                                                 instance, then pay the price of second
+                                                                 highest bidder - great for workloads where occasional
+                                                                 dropouts are not important like research,
+                                                                 AI
+                                                                 training etc.
+                                                               </div>}/>}/>
+                          <FormControlLabel value="guaranteedAvailability" control={<Radio/>}
+                                            label={<RadioLabel classes={classes} label="Guaranteed Availability"
+                                                               description={<div>
+                                                                 Pay fixed price per minute, your instance is available
+                                                                 until you stop it.
+                                                               </div>}/>}/>
+                          <FormControlLabel value="longTermBooking" control={<Radio/>}
+                                            label={<RadioLabel classes={classes} label="Long-term Booking"
+                                                               description={<div>
+                                                                 Great for hosting websites "and always" on services -
+                                                                 pay smaller price than on Guaranteed
+                                                                 availability
+                                                               </div>}/>}/>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormControl className={classes.formControl} style={{marginTop: '10px'}}>
+                        <TextField
+                          label="Price"
+                          value={data.price}
+                          onChange={this.handleChange('price')}
+                          type="number"
+                        />
+                      </FormControl>
                       <Actions classes={classes} onPrevious={this.onPrevious} onNext={this.onNext}
                                onCancel={this.onCancel}/>
                     </StepContent>
@@ -237,3 +394,10 @@ const Actions = ({classes, onPrevious, onNext, onCancel, currentStep, isLast}) =
 Actions.defaultProps = {
   isLast: false
 };
+
+const RadioLabel = ({classes, label, description}) => (
+  <div>
+    <div>{label}</div>
+    <div className={classes.radioDescription}>{description}</div>
+  </div>
+);

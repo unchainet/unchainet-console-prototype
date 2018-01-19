@@ -1,13 +1,17 @@
 import {types, applySnapshot} from 'mobx-state-tree';
 import Router from 'next/router';
 import Configuration from "./model/configuration";
+import Region from './model/region';
+import Provider from './model/provider';
 
 let store = null;
 
 const Store = types
   .model({
     isLogged: types.boolean,
-    configurations: types.array(Configuration)
+    configurations: types.array(Configuration),
+    regions: types.array(Region),
+    providers: types.array(Provider)
   })
   .actions((self) => {
     function login(email, password) {
@@ -41,13 +45,51 @@ export function initStore(isServer, snapshot = null) {
           {
             id: "1",
             name: 'Sydney S1',
-            location: 'Sydney',
             cpuCores: 4,
             ram: 16,
             storage: 120,
             gpu: 'none',
             containerType: 'Docker',
-            containerUrl: 'http://somethingsomething'
+            dockerConfig: {
+              imageName:'',
+              repositoryUrl:''
+            },
+            kubernetesConfig: {
+              script: ''
+            },
+            provider: '1',
+            auctionedPricing: 2,
+            eventualAvailability: 4,
+            guaranteedAvailability: 0,
+            priceType: "eventualAvailability"
+          }
+        ],
+        regions: [
+          {
+            id:'1',
+            name: 'Australia',
+            zoom: 4,
+            location: {lat: -23.268353, lng: 134.185811}
+          },
+          {
+            id:'2',
+            name: 'China',
+            zoom: 5,
+            location: {lat: 23.1253503, lng: 112.9476547}
+          }
+        ],
+        providers: [
+          {
+            id: '1',
+            name: 'Provider ABC',
+            region: '1',
+            location: {lat: -33.8980122, lng: 151.1802367}
+          },
+          {
+            id: '2',
+            name: 'Provider 123',
+            region: '1',
+            location: {lat: -33.879083, lng: 151.1954023}
           }
         ]
       });

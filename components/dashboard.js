@@ -52,11 +52,12 @@ class Dashboard extends React.Component {
             <TableHead>
               <TableRow>
                 <TableCell>Name</TableCell>
-                <TableCell>Location</TableCell>
+                <TableCell>Provider</TableCell>
+                <TableCell>Region</TableCell>
                 <TableCell numeric>CPU cores</TableCell>
-                <TableCell numeric>RAM</TableCell>
-                <TableCell numeric>Storage</TableCell>
-                <TableCell>GPU</TableCell>
+                <TableCell numeric>RAM (GB)</TableCell>
+                <TableCell numeric>Storage (GB)</TableCell>
+                <TableCell>GPU Cores</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -66,11 +67,12 @@ class Dashboard extends React.Component {
                   return (
                     <TableRow key={cfg.id}>
                       <TableCell>{cfg.name}</TableCell>
-                      <TableCell>{cfg.location}</TableCell>
+                      <TableCell>{cfg.provider.name}</TableCell>
+                      <TableCell>{cfg.provider.region.name}</TableCell>
                       <TableCell numeric>{cfg.cpuCores}</TableCell>
                       <TableCell numeric>{cfg.ram}</TableCell>
                       <TableCell numeric>{cfg.storage}</TableCell>
-                      <TableCell>{cfg.gpu}</TableCell>
+                      <TableCell numeric>{cfg.gpuCores}</TableCell>
                       <TableCell className={classes.noWrap}>
                         <Tooltip title='Edit'>
                           <IconButton className={classes.actionBtn}>

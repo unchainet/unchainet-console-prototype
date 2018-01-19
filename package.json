@@ -5,7 +5,7 @@
     "google-map-react": "^0.27.0",
     "immutability-helper": "^2.6.4",
     "jss": "latest",
-    "material-ui": "1.0.0-beta.28",
+    "material-ui": "1.0.0-beta.29",
     "material-ui-icons": "^1.0.0-beta.17",
     "mobx": "^3.4.1",
     "mobx-react": "^4.0.4",
@@ -15,6 +15,7 @@
     "prop-types": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-google-maps": "^9.4.5",
     "react-jss": "latest"
   },
   "devDependencies": {
