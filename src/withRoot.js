@@ -20,9 +20,16 @@ const styles = theme => ({
 
 function withRoot(Component) {
   class WithRoot extends React.Component {
-    static getInitialProps ({ req }) {
+    static getInitialProps ({ req, res }) {
       const isServer = !!req;
       const store = initStore(isServer);
+      if(isServer && res && req.url.indexOf('/logged/') > -1) {
+        res.writeHead(302, {
+          Location: '/login'
+        })
+        res.end()
+        res.finished = true
+      }
       return { initialState: getSnapshot(store), isServer }
     }
 

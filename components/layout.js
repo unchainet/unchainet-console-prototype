@@ -31,7 +31,7 @@ const styles = theme => ({
 });
 
 @inject('store') @observer
-class Index extends React.Component {
+class Layout extends React.Component {
   state = {
     drawerOpen: false
   }
@@ -65,4 +65,4 @@ class Index extends React.Component {
   }
 }
 
-export default withStyles(styles)(Index);
+export default withStyles(styles)(Layout);

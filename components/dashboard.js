@@ -43,7 +43,7 @@ class Dashboard extends React.Component {
           Running instances
         </Typography>
         <Tooltip title='Add new configuration'>
-          <Button fab color='accent' mini className={classes.addBtn} onClick={()=>Router.push('/config-wizard')}>
+          <Button fab color='accent' mini className={classes.addBtn} onClick={()=>Router.push('/logged/config-wizard')}>
             <AddIcon/>
           </Button>
         </Tooltip>

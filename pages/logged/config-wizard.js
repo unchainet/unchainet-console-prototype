@@ -2,8 +2,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {withStyles} from 'material-ui/styles';
-import withRoot from '../src/withRoot';
-import Layout from '../components/layout';
+import withRoot from '../../src/withRoot';
+import Layout from '../../components/layout';
 import {inject, observer} from 'mobx-react'
 import Stepper, {Step, StepContent, StepLabel} from "material-ui/Stepper";
 import TextField from "material-ui/TextField";
@@ -18,7 +18,7 @@ import {InputLabel} from "material-ui/Input";
 import {FormControl, FormControlLabel, FormLabel} from "material-ui/Form";
 import Radio, {RadioGroup} from 'material-ui/Radio';
 import update from 'immutability-helper';
-import Map from '../components/map';
+import Map from '../../components/map';
 import {Marker, InfoWindow} from "react-google-maps";
 
 const styles = theme => ({

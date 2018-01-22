@@ -16,7 +16,7 @@ const Store = types
   .actions((self) => {
     function login(email, password) {
       self.isLogged = true;
-      Router.push('/dashboard');
+      Router.push('/logged/dashboard');
     }
 
     function logout() {
@@ -33,7 +33,14 @@ const Store = types
       self.configurations.remove(cfgToDelete);
     }
 
-    return {login, logout, deleteConfiguration, addConfiguration}
+    function checkPermission() {
+      if(!self.isLogged) {
+        // ToDo: Implement server side redirection
+        window.location = "/";
+      }
+    }
+
+    return {login, logout, deleteConfiguration, addConfiguration, checkPermission}
   });
 
 export function initStore(isServer, snapshot = null) {
