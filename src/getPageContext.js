@@ -1,11 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 
 import {SheetsRegistry} from 'jss';
-import {createMuiTheme, createGenerateClassName, } from 'material-ui/styles';
-import lightBlue from 'material-ui/colors/lightBlue';
-import amber from 'material-ui/colors/amber';
-import blue from 'material-ui/colors/blue';
-
+import {createGenerateClassName, createMuiTheme,} from 'material-ui/styles';
 
 const theme = createMuiTheme({
     palette: {

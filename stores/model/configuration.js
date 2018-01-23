@@ -13,7 +13,8 @@ const Configuration = types.model({
   dockerConfig: types.frozen,
   kubernetesConfig: types.frozen,
   priceType: types.enumeration("priceType", ["eventualAvailability", "guaranteedAvailability","longTermBooking"]),
-  price: 0
+  price: 0,
+  status: types.optional(types.enumeration("status", ["running", "archived"]),()=>'running')
 });
 
 export default Configuration;

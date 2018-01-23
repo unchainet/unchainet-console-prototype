@@ -44,18 +44,19 @@ class Layout extends React.Component {
         <AppBar position="static">
           <Toolbar>
             {store.isLogged &&
-            <IconButton className={classes.menuButton} aria-label="Menu" onClick={()=>this.setState({drawerOpen:true})}>
-              <MenuIcon color='contrast'/>
+            <IconButton color="inherit" className={classes.menuButton} aria-label="Menu" onClick={()=>this.setState({drawerOpen:true})}>
+              <MenuIcon color='inherit'/>
             </IconButton>}
             <Typography type="title" color="inherit" className={classes.flex}>
               UNCHAINET
             </Typography>
             {store.isLogged ?
-              <Button color="contrast" onClick={() => store.logout()}>Logout</Button>
+              <Button color="inherit" onClick={() => store.logout()}>Logout</Button>
               :
-              <Button color="contrast" onClick={() => Router.push('/login')}>Login</Button>
+              <Button color="inherit" onClick={() => Router.push('/login')}>Login</Button>
             }
-            <Button color="contrast" onClick={() => Router.push('/sign-up')}>Sign up</Button>
+            {!store.isLogged &&
+            <Button color="inherit" onClick={() => Router.push('/sign-up')}>Sign up</Button>}
           </Toolbar>
         </AppBar>
         <div className={classes.mainContent}>{children}</div>

@@ -13,6 +13,16 @@ const Store = types
     regions: types.array(Region),
     providers: types.array(Provider)
   })
+  .views(self=>{
+    return{
+      get runningConfigurations() {
+        return self.configurations.filter(i=>i.status === 'running');
+      },
+      get archivedConfigurations() {
+        return self.configurations.filter(i=>i.status === 'archived');
+      }
+    }
+  })
   .actions((self) => {
     function login(email, password) {
       self.isLogged = true;
@@ -28,9 +38,24 @@ const Store = types
       self.configurations.push(cfg);
     }
 
+    function saveConfiguration(cfg) {
+      let index = self.configurations.findIndex(i=>i.id === cfg.id);
+      self.configurations[index] = cfg;
+    }
+
     function deleteConfiguration(id) {
       let cfgToDelete = self.configurations.find(cfg => cfg.id == id);
       self.configurations.remove(cfgToDelete);
+    }
+
+    function archiveConfiguration(id) {
+      let cfgToArchive = self.configurations.find(cfg => cfg.id == id)
+      cfgToArchive.status = 'archived';
+    }
+
+    function startConfiguration(id) {
+      let cfgToStart = self.configurations.find(cfg => cfg.id == id)
+      cfgToStart.status = 'running';
     }
 
     function checkPermission() {
@@ -40,7 +65,7 @@ const Store = types
       }
     }
 
-    return {login, logout, deleteConfiguration, addConfiguration, checkPermission}
+    return {login, logout, deleteConfiguration, addConfiguration, checkPermission, archiveConfiguration, startConfiguration,saveConfiguration}
   });
 
 export function initStore(isServer, snapshot = null) {
@@ -56,19 +81,21 @@ export function initStore(isServer, snapshot = null) {
             ram: 16,
             storage: 120,
             gpu: 'none',
-            containerType: 'Docker',
+            containerType: 'Kubernetes',
             dockerConfig: {
               imageName:'',
               repositoryUrl:''
             },
             kubernetesConfig: {
-              script: ''
+              script: 'some script'
             },
             provider: '1',
             auctionedPricing: 2,
             eventualAvailability: 4,
             guaranteedAvailability: 0,
-            priceType: "eventualAvailability"
+            price: 10,
+            priceType: "eventualAvailability",
+            status: 'running'
           }
         ],
         regions: [
