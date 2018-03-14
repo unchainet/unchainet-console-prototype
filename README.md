@@ -14,7 +14,3 @@ What's working:
 - Sign up (not doing much)
 - Dashboard
 - Add new configuration
-
-To Do:
-
-- Spoustu veci
